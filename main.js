@@ -66,7 +66,7 @@ app.post(
     );
     const stop = Date.now();
     res.render("index", {
-      title: "24 Game Solver: Result",
+      title: "24 Game Solver: Solution(s)",
       errors: errors.array(),
       data: {
         solutions: solutions,

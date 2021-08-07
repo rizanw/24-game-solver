@@ -24,7 +24,7 @@ block content
 
     div.border-top.mt-4.pt-1
     if data.solutions.length !== 0
-        h2 Result:
+        h2 Solution(s):
             
         div.p-4.mb-4.bg-light.rounded-3
             div.container-fluid
@@ -37,6 +37,6 @@ block content
                         for solution in data.solutions
                             div.p-2.bd-highlight.px-5.fs-4.text-center= `${solution}`
     else
-        h2 The result will be shown below.
+        h2 The solution(s) will be shown below.
 
     
