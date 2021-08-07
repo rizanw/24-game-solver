@@ -1,0 +1,29 @@
+doctype html
+html(lang="en")
+  head
+    title= `${title}`
+    meta(name='viewport', content='width=device-width, initial-scale=1, shrink-to-fit=no')
+    meta(name='description', content='The 24-Game Solver by rzndwb. The 24 Game is to find a way to manipulate four integers let the result is 24. This solver only works if all 4 numbers (between 1 and 13) are given!')
+    link(rel='stylesheet', href='/bootstrap/dist/css/bootstrap.min.css')
+    link(rel='shortcut icon', href='/favicon.ico', type='image/x-icon') 
+  
+  body
+    div.container.py-4
+      header.pb-3.mb-4.border-bottom 
+        a(href="/").d-flex.align-items-center.text-dark.text-decoration-none
+          img(src="/icon.png", alt="icon", class="me-2", style="height:32px")
+          span.fs-4 24 Game Solver
+
+      div.p-4.mb-4.bg-light.rounded-3
+        div.container-fluid.py-2
+          img(src="/icon.png", alt="icon", class="me-2", style="height:96px")
+          h1.display-5.fw-bold 24 Game Solver
+          p.col-md-10.fs-4 Welcome to 24 Game Solver by 
+            a(href="https://github.com/rizanw", rel="noopener", target="_blank").link-danger rzndwb
+            | . Enter your 4 numbers below, then click "Solve!" to see every solution that equals 24. This solver only works if all 4 numbers (between 1 and 13) are given!
+
+      block content
+
+    script(src="/jquery/dist/jquery.min.js", type='text/javascript')
+    script(src="/jquery/dist/jquery.slim.min.js", type='text/javascript')
+    script(src="/bootstrap/dist/js/bootstrap.min.js", type='text/javascript')

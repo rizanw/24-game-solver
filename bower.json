@@ -1,0 +1,25 @@
+{
+  "name": "24gamesolver",
+  "description": "24 Game Solver",
+  "main": "main.js",
+  "authors": [
+    "rizanw"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "24game"
+  ],
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.6.0",
+    "bootstrap": "^5.1.0"
+  }
+}

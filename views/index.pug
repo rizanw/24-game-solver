@@ -1,0 +1,42 @@
+extends layout
+
+block content
+    if errors.length !== 0
+        for error in errors
+            div.alert.alert-danger.d-flex.align-items-center.alert-dismissible.fade.show
+                div= `${error.msg}`
+                button(class="btn-close", data-bs-dismiss="alert", aria-label="Close")  
+
+    form(action=".", method="post").needs-validation
+        h2 Enter numbers:
+        div.row.g-2
+            div.col
+                input(type="number", name="w", value=`${data.w}`, class="form-control form-control-lg", required)
+            div.col 
+                input(type="number", name="x", value=`${data.x}`, class="form-control form-control-lg", required)
+            div.col 
+                input(type="number", name="y", value=`${data.y}`, class="form-control form-control-lg", required)
+            div.col 
+                input(type="number", name="z", value=`${data.z}`, class="form-control form-control-lg", required)
+        div.invalid-feedback= "Please fill the columns with a number."
+        div.d-grid.gap-2.col-12.mx-auto    
+            input(type="submit" value="Solve!", class="btn btn-danger btn-lg", style="margin-top:16px;", required)
+
+    div.border-top.mt-4.pt-1
+    if data.solutions.length !== 0
+        h2 Result:
+            
+        div.p-4.mb-4.bg-light.rounded-3
+            div.container-fluid
+                if data.solutions[0] === "no solution found."
+                    h4= `No Solution Found!`
+                    p= `Those combinations have no solution.`
+                else
+                    h4= `${data.solutions.length} Solution(s) Found in ${data.seconds} seconds :`
+                    div.d-flex.flex-wrap
+                        for solution in data.solutions
+                            div.p-2.bd-highlight.px-5.fs-4.text-center= `${solution}`
+    else
+        h2 The result will be shown below.
+
+    
