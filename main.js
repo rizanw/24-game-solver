@@ -7,7 +7,7 @@ var favicon = require("serve-favicon");
 const { solve24Game } = require("./solver");
 
 const app = express();
-const port = 3000;
+const port = 5000;
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set("views", path.join(__dirname, "views"));
