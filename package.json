@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node ./main.js",
     "dev": "nodemon ./main.js",
-    "postinstall": "./node_modules/bower/bin/bower install"
+    "postinstall": "./node_modules/bower/bin/bower install --allow-root"
   },
   "keywords": [
     "24game"
@@ -23,6 +23,10 @@
     "serve-favicon": "^2.5.0"
   },
   "devDependencies": {
+    "@vercel/node": "^2.5.26",
     "nodemon": "^2.0.12"
+  },
+  "engines": {
+    "node": "16.x"
   }
 }
