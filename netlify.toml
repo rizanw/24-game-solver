@@ -1,0 +1,17 @@
+[build]
+  # Netlify runs npm install automatically; this collects the static files for the CDN
+  command = "mkdir -p public/bootstrap && cp -r assets/. public/ && cp -r node_modules/bootstrap/dist public/bootstrap/"
+  publish = "public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  included_files = ["views/**", "assets/favicon.ico"]
+
+# Static files (CSS, JS, icons) are served from the CDN; everything else goes to Express.
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/app"
+  status = 200

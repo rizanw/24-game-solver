@@ -11,75 +11,64 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set("views", path.join(__dirname, "views"));
+// Register Pug explicitly so serverless bundlers (Netlify Functions) include it.
+app.engine("pug", require("pug").__express);
 app.set("view engine", "pug");
-app.use(express.static(path.join(__dirname, "bower_components")));
+app.use("/bootstrap", express.static(path.join(__dirname, "node_modules", "bootstrap")));
 app.use(express.static(path.join(__dirname, "assets")));
 app.use(favicon(path.join(__dirname, "assets", "favicon.ico")));
 
+const emptyData = { solutions: [], w: "", x: "", y: "", z: "", seconds: 0, submitted: false };
+
 app.get("/", (req, res) => {
-  res.render("index", {
-    title: "24 Game Solver",
-    errors: [],
-    data: {
-      solutions: [],
-      w: "",
-      x: "",
-      y: "",
-      z: "",
-      seconds: 0,
-    },
-  });
+  res.render("index", { title: "24 Game Solver", errors: [], data: emptyData });
 });
+
+const FIELDS = [
+  ["w", "first"],
+  ["x", "second"],
+  ["y", "third"],
+  ["z", "fourth"],
+];
 
 app.post(
   "/",
-  [
-    check("w")
-      .isNumeric()
-      .withMessage("Please fill the first column with number between 1 to 13")
-      .isLength({ min: 1 })
-      .withMessage("Please fill the first column with number between 1 to 13"),
-    check("x")
-      .isNumeric()
-      .withMessage("Please fill the first column with number between 1 to 13")
-      .isLength({ min: 1 })
-      .withMessage("Please fill the second column with number between 1 to 13"),
-    check("y")
-      .isNumeric()
-      .withMessage("Please fill the first column with number between 1 to 13")
-      .isLength({ min: 1 })
-      .withMessage("Please fill the third column with number between 1 to 13"),
-    check("z")
-      .isNumeric()
-      .withMessage("Please fill the first column with number between 1 to 13")
-      .isLength({ min: 1 })
-      .withMessage("Please fill the fourth column with number between 1 to 13"),
-  ],
+  FIELDS.map(([field, position]) =>
+    check(field)
+      .trim()
+      .isInt({ min: 1, max: 13 })
+      .withMessage(`Please fill the ${position} column with a whole number between 1 and 13`)
+      .toInt()
+  ),
   (req, res) => {
-    const start = Date.now();
     const errors = validationResult(req);
-    const solutions = solve24Game(
-      req.body.w,
-      req.body.x,
-      req.body.y,
-      req.body.z
-    );
-    const stop = Date.now();
+    const { w, x, y, z } = req.body;
+
+    if (!errors.isEmpty()) {
+      return res.status(400).render("index", {
+        title: "24 Game Solver",
+        errors: errors.array(),
+        data: { ...emptyData, w, x, y, z },
+      });
+    }
+
+    const start = Date.now();
+    const solutions = solve24Game(w, x, y, z);
+    const seconds = (Date.now() - start) / 1000;
+
     res.render("index", {
       title: "24 Game Solver: Solution(s)",
-      errors: errors.array(),
-      data: {
-        solutions: solutions,
-        w: req.body.w,
-        x: req.body.x,
-        y: req.body.y,
-        z: req.body.z,
-        seconds: (stop - start) / 1000,
-      },
+      errors: [],
+      data: { solutions, w, x, y, z, seconds, submitted: true },
     });
   }
 );
 
-app.listen(port, () => {
-  console.log(`24Game Solver app listening at http://localhost:${port}`);
-});
+// Vercel imports the app; locally (and on Heroku-style hosts) we start the server.
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`24 Game Solver app listening at http://localhost:${port}`);
+  });
+}
+
+module.exports = app;

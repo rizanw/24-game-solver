@@ -1,214 +1,118 @@
-var permvar = new Array(24);
-permvar[0] = new Array("w", "x", "y", "z");
-permvar[1] = new Array("w", "x", "z", "y");
-permvar[2] = new Array("w", "y", "x", "z");
-permvar[3] = new Array("w", "y", "z", "x");
-permvar[4] = new Array("w", "z", "x", "y");
-permvar[5] = new Array("w", "z", "y", "x");
-permvar[6] = new Array("x", "w", "y", "z");
-permvar[7] = new Array("x", "w", "z", "y");
-permvar[8] = new Array("x", "y", "w", "z");
-permvar[9] = new Array("x", "y", "z", "w");
-permvar[10] = new Array("x", "z", "w", "y");
-permvar[11] = new Array("x", "z", "y", "w");
-permvar[12] = new Array("y", "w", "x", "z");
-permvar[13] = new Array("y", "w", "z", "x");
-permvar[14] = new Array("y", "x", "w", "z");
-permvar[15] = new Array("y", "x", "z", "w");
-permvar[16] = new Array("y", "z", "w", "x");
-permvar[17] = new Array("y", "z", "x", "w");
-permvar[18] = new Array("z", "w", "x", "y");
-permvar[19] = new Array("z", "w", "y", "x");
-permvar[20] = new Array("z", "x", "w", "y");
-permvar[21] = new Array("z", "x", "y", "w");
-permvar[22] = new Array("z", "y", "w", "x");
-permvar[23] = new Array("z", "y", "x", "w");
+/**
+ * 24 Game solver.
+ *
+ * Tries every ordering of the four numbers, every combination of the four
+ * operators, and all five ways to group four operands, then keeps the
+ * expressions that equal exactly 24.
+ *
+ * Arithmetic uses exact fractions instead of floating point, so solutions
+ * that pass through non-integers (e.g. 8 / (3 - 8 / 3)) aren't missed.
+ */
 
-var op = new Array("*", "+", "/", "-");
+const TARGET = 24;
+const OPERATORS = ["+", "-", "*", "/"];
+const PRECEDENCE = { "+": 1, "-": 1, "*": 2, "/": 2 };
 
-function solve24Game(w, x, y, z) {
-  var sol = findSolution(parseInt(w), parseInt(x), parseInt(y), parseInt(z));
+// ---- exact fraction arithmetic -------------------------------------------
 
-  sol = sol.map((e) => {
-    return replace(e, w, x, y, z);
-  });
-
-  return sol;
+function gcd(a, b) {
+  a = Math.abs(a);
+  b = Math.abs(b);
+  while (b) [a, b] = [b, a % b];
+  return a;
 }
 
-function replace(sol, w, x, y, z) {
-  sol = sol.replace("x", x);
-  sol = sol.replace("y", y);
-  sol = sol.replace("w", w);
-  sol = sol.replace("z", z);
-
-  return sol;
+function fraction(n, d = 1) {
+  if (d < 0) [n, d] = [-n, -d];
+  const g = gcd(n, d) || 1;
+  return { n: n / g, d: d / g };
 }
 
-function findSolution(w, x, y, z) {
-  var op1, op2, op3;
-  var res = [];
+function apply(op, a, b) {
+  switch (op) {
+    case "+": return fraction(a.n * b.d + b.n * a.d, a.d * b.d);
+    case "-": return fraction(a.n * b.d - b.n * a.d, a.d * b.d);
+    case "*": return fraction(a.n * b.n, a.d * b.d);
+    case "/": return b.n === 0 ? null : fraction(a.n * b.d, a.d * b.n);
+  }
+}
 
-  for (let i = 0; i < 24; i++) {
-    for (let j = 0; j < 4; j++) {
-      op1 = op[j];
-      for (let k = 0; k < 4; k++) {
-        op2 = op[k];
-        for (let l = 0; l < 4; l++) {
-          op3 = op[l];
+// ---- expression trees ----------------------------------------------------
 
-          let fu =
-            permvar[i][0] +
-            op1 +
-            permvar[i][1] +
-            op2 +
-            permvar[i][2] +
-            op3 +
-            permvar[i][3];
-          if (f(w, x, y, z, fu) == 24) res.push(fu);
+const leaf = (value) => ({ value });
+const node = (op, left, right) => ({ op, left, right });
 
-          fu =
-            "(" +
-            permvar[i][0] +
-            op1 +
-            permvar[i][1] +
-            ")" +
-            op2 +
-            permvar[i][2] +
-            op3 +
-            permvar[i][3];
-          if (f(w, x, y, z, fu) == 24) res.push(fu);
+function evaluate(tree) {
+  if (tree.op === undefined) return fraction(tree.value);
+  const left = evaluate(tree.left);
+  const right = evaluate(tree.right);
+  if (left === null || right === null) return null;
+  return apply(tree.op, left, right);
+}
 
-          fu =
-            permvar[i][0] +
-            op1 +
-            "(" +
-            permvar[i][1] +
-            op2 +
-            permvar[i][2] +
-            ")" +
-            op3 +
-            permvar[i][3];
-          if (f(w, x, y, z, fu) == 24) res.push(fu);
+// Format with only the parentheses the expression actually needs.
+function format(tree) {
+  if (tree.op === undefined) return String(tree.value);
 
-          fu =
-            permvar[i][0] +
-            op1 +
-            permvar[i][1] +
-            op2 +
-            "(" +
-            permvar[i][2] +
-            op3 +
-            permvar[i][3] +
-            ")";
-          if (f(w, x, y, z, fu) == 24) res.push(fu);
+  const wrap = (child, isRight) => {
+    const text = format(child);
+    if (child.op === undefined) return text;
+    const parent = PRECEDENCE[tree.op];
+    const inner = PRECEDENCE[child.op];
+    const needsParens =
+      inner < parent ||
+      (isRight && inner === parent && (tree.op === "-" || tree.op === "/"));
+    return needsParens ? `(${text})` : text;
+  };
 
-          fu =
-            "(" +
-            permvar[i][0] +
-            op1 +
-            permvar[i][1] +
-            ")" +
-            op2 +
-            "(" +
-            permvar[i][2] +
-            op3 +
-            permvar[i][3] +
-            ")";
-          if (f(w, x, y, z, fu) == 24) res.push(fu);
+  return `${wrap(tree.left, false)} ${tree.op} ${wrap(tree.right, true)}`;
+}
 
-          fu =
-            "(" +
-            permvar[i][0] +
-            op1 +
-            permvar[i][1] +
-            op2 +
-            permvar[i][2] +
-            ")" +
-            op3 +
-            permvar[i][3];
-          if (f(w, x, y, z, fu) == 24) res.push(fu);
+// The five distinct ways to combine four operands with three binary operators.
+function groupings(a, b, c, d, o1, o2, o3) {
+  return [
+    node(o3, node(o2, node(o1, a, b), c), d), // ((a b) c) d
+    node(o3, node(o1, a, node(o2, b, c)), d), // (a (b c)) d
+    node(o2, node(o1, a, b), node(o3, c, d)), // (a b) (c d)
+    node(o1, a, node(o3, node(o2, b, c), d)), // a ((b c) d)
+    node(o1, a, node(o2, b, node(o3, c, d))), // a (b (c d))
+  ];
+}
 
-          fu =
-            permvar[i][0] +
-            op1 +
-            "(" +
-            permvar[i][1] +
-            op2 +
-            permvar[i][2] +
-            op3 +
-            permvar[i][3] +
-            ")";
-          if (f(w, x, y, z, fu) == 24) res.push(fu);
+function permutations(items) {
+  if (items.length <= 1) return [items];
+  return items.flatMap((item, i) =>
+    permutations([...items.slice(0, i), ...items.slice(i + 1)]).map((rest) => [item, ...rest])
+  );
+}
 
-          fu =
-            "(" +
-            "(" +
-            permvar[i][0] +
-            op1 +
-            permvar[i][1] +
-            ")" +
-            op2 +
-            permvar[i][2] +
-            ")" +
-            op3 +
-            permvar[i][3];
-          if (f(w, x, y, z, fu) == 24) res.push(fu);
+/**
+ * @param {number[]} numbers four integers
+ * @returns {string[]} unique expressions equal to 24 (empty if none)
+ */
+function findSolutions(numbers) {
+  const solutions = new Set();
 
-          fu =
-            permvar[i][0] +
-            op1 +
-            "(" +
-            "(" +
-            permvar[i][1] +
-            op2 +
-            permvar[i][2] +
-            ")" +
-            op3 +
-            permvar[i][3] +
-            ")";
-          if (f(w, x, y, z, fu) == 24) res.push(fu);
-
-          fu =
-            "(" +
-            permvar[i][0] +
-            op1 +
-            "(" +
-            permvar[i][1] +
-            op2 +
-            permvar[i][2] +
-            ")" +
-            ")" +
-            op3 +
-            permvar[i][3];
-          if (f(w, x, y, z, fu) == 24) res.push(fu);
-
-          fu =
-            permvar[i][0] +
-            op1 +
-            "(" +
-            permvar[i][1] +
-            op2 +
-            "(" +
-            permvar[i][2] +
-            op3 +
-            permvar[i][3] +
-            ")" +
-            ")";
-          if (f(w, x, y, z, fu) == 24) res.push(fu);
+  for (const [a, b, c, d] of permutations(numbers.map(leaf))) {
+    for (const o1 of OPERATORS) {
+      for (const o2 of OPERATORS) {
+        for (const o3 of OPERATORS) {
+          for (const tree of groupings(a, b, c, d, o1, o2, o3)) {
+            const result = evaluate(tree);
+            if (result !== null && result.d === 1 && result.n === TARGET) {
+              solutions.add(format(tree));
+            }
+          }
         }
       }
     }
   }
-  if (res.length) return res;
-  else return ["no solution found."];
+
+  return [...solutions];
 }
 
-function f(w, x, y, z, fu) {
-  var myfunction = new Function("w", "x", "y", "z", "return " + fu + ";");
-  return myfunction(w, x, y, z, fu);
+function solve24Game(w, x, y, z) {
+  return findSolutions([w, x, y, z].map((n) => parseInt(n, 10)));
 }
 
-module.exports = { solve24Game };
-
-
+module.exports = { solve24Game, findSolutions };
