@@ -2,10 +2,9 @@
 
 A web app that finds every way to make **24** from four numbers using `+`, `-`, `×`, and `÷`.
 
-**[▶ Try it live](https://24-game-solver.netlify.app/)** <!-- TODO: update if your Netlify site name differs -->
+**[▶ Try it live](https://24-game-solver.rzndwb.xyz/)**
 
-<!-- TODO: add a screenshot, e.g. docs/screenshot.png -->
-<!-- ![24 Game Solver](docs/screenshot.png) -->
+![24 Game Solver solving 3, 5, 7, 9](docs/screenshot.png)
 
 ## The game
 
